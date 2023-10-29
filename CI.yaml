@@ -1,0 +1,50 @@
+trigger:
+  - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+  - script: |
+      # Install Java
+      sudo apt update
+      sudo apt install -y openjdk-17-jdk # Replace with the desired Java version package name
+      
+      # Install Maven
+      sudo apt install -y maven
+      
+      # Set JAVA_HOME and MAVEN_HOME
+      echo "##vso[task.setvariable variable=JAVA_HOME]/usr/lib/jvm/java-17-openjdk-amd64" # Set the correct path
+      echo "##vso[task.setvariable variable=MAVEN_HOME]/usr/share/maven" # Set the correct path
+      
+      # Add Java and Maven to PATH
+      echo "##vso[task.setvariable variable=PATH]$(JAVA_HOME)/bin:$(MAVEN_HOME)/bin:$PATH"
+    displayName: 'Install Java and Maven'
+
+  - script: 'java -version'
+    displayName: 'Check Java Version'
+
+  - script: 'mvn -version'
+    displayName: 'Check Maven Version'
+
+
+  - task: Maven@3
+    inputs:
+      mavenPomFile: 'pom.xml'
+      mavenOptions: '-Xmx3072m'
+      goals: 'install'
+      publishJUnitResults: true
+      testResultsFiles: '**/surefire-reports/TEST-*.xml'
+
+  - task: Docker@0
+    displayName: 'Build an image'
+    inputs:
+      azureSubscription: 'Azure subscription 1 (5e8944ac-d1ba-4b86-8315-eedd04e037d3)'
+      azureContainerRegistry: '{"loginServer":"backecontainerregistry.azurecr.io", "id" : "/subscriptions/5e8944ac-d1ba-4b86-8315-eedd04e037d3/resourceGroups/DemoRG/providers/Microsoft.ContainerRegistry/registries/BackeContainerRegistry"}'
+
+  - task: Docker@0
+    displayName: 'Push an image'
+    inputs:
+      azureSubscription: 'Azure subscription 1 (5e8944ac-d1ba-4b86-8315-eedd04e037d3)'
+      azureContainerRegistry: '{"loginServer":"backecontainerregistry.azurecr.io", "id" : "/subscriptions/5e8944ac-d1ba-4b86-8315-eedd04e037d3/resourceGroups/DemoRG/providers/Microsoft.ContainerRegistry/registries/BackeContainerRegistry"}'
+      action: 'Push an image'
