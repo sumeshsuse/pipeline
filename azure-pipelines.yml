@@ -36,6 +36,9 @@ steps:
     publishJUnitResults: true
     testResultsFiles: '**/surefire-reports/TEST-*.xml'
 
+- script: 'docker --version'
+  displayName: 'Check Docker Version'
+
 - task: Docker@0
   displayName: 'Build an image'
   inputs:
